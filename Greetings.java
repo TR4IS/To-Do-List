@@ -58,22 +58,19 @@ public class Greetings {
 
 
         f1.addMouseListener(new MouseAdapter() {
-            // جعل المتغيرات final
-            final int[] x = new int[1]; // استخدام array لجعل المتغير قابل للتعديل ولكن ما زال final
+            final int[] x = new int[1]; 
             final int[] y = new int[1];
 
             public void mousePressed(MouseEvent e) {
-                // حفظ مكان الضغط
                 x[0] = e.getX();
                 y[0] = e.getY();
 
                 System.out.println(x[0]+" "+y[0]);
                 System.out.println(f1.getX()+ " "+f1.getY());
 
-                // إضافة مستمع الحركة عند الضغط
                 f1.addMouseMotionListener(new MouseMotionAdapter() {
                     public void mouseDragged(MouseEvent e) {
-                        // تحريك النافذة أثناء السحب
+                        
                         SwingUtilities.invokeLater(() -> {
                             f1.setLocation(f1.getX() + e.getX() - x[0], f1.getY() + e.getY() - y[0]);
                         });
@@ -82,7 +79,6 @@ public class Greetings {
             }
 
             public void mouseReleased(MouseEvent e) {
-                // إزالة مستمع الحركة عند رفع الفأرة
                 for (MouseMotionListener listener : f1.getMouseMotionListeners()) {
                     f1.removeMouseMotionListener(listener);
                 }
