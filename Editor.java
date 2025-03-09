@@ -1,3 +1,4 @@
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -124,7 +125,6 @@ public class Editor {
         }
         return string.toString();
     }
-
     private static void saveTextToFile(String text, String filename) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
             writer.write(text);
@@ -132,5 +132,8 @@ public class Editor {
             e.printStackTrace();
         }
     }
+    
 }
+    
+
 
