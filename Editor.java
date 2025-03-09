@@ -1,220 +1,136 @@
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.util.Scanner;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTextPane;
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.io.BufferedWriter;
+import javax.swing.BorderFactory;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Point;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.File;
 
 public class Editor {
-    private static final String LAST = "last_location.txt";
-    static ImageIcon icon = new ImageIcon("Images\\iconX.png");
-    private static final int RESIZE_MARGIN = 10; // الهامش لتغيير الحجم
 
     public static void main(String[] args) {
-        JFrame f1 = new JFrame();
-        f1.setUndecorated(true);
-        f1.setIconImage(icon.getImage());
-        f1.setSize(300, 300);
-        f1.getRootPane().setBorder(BorderFactory.createEmptyBorder());
+        JFrame frame = new JFrame();
+        frame.setBackground(Color.BLACK);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(350, 450);
+        frame.setResizable(false);
+        frame.setUndecorated(true);
+        frame.setLayout(new BorderLayout());
+        frame.getRootPane().setBorder(BorderFactory.createLineBorder(Color.GRAY, 2));
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
-        panel.setBackground(Color.BLACK);
+        JPanel Toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        Toolbar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.GRAY)); // Bottom border only
+        Toolbar.setPreferredSize(new Dimension(frame.getWidth(), 35));
+        Toolbar.setBackground(Color.BLACK);
 
-        JPanel BPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        BPanel.setBackground(Color.BLACK);
-        BPanel.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
-
-        JPanel PPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        PPanel.setBackground(Color.BLACK);
-        PPanel.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
-
-        panel.add(BPanel, BorderLayout.NORTH);
-        panel.add(PPanel, BorderLayout.CENTER);
-
-        f1.setContentPane(panel);
-
-        JLabel l1 = new JLabel("Editor X");
-        BPanel.add(l1);
+        JTextPane textPane = new JTextPane();
+        textPane.setBackground(Color.BLACK);
+        textPane.setForeground(Color.WHITE);
+        textPane.setEditable(true);
+        textPane.setFont(getFont("To-Do-List/Fonts/FiraCode-VF.ttf", 20));
+        textPane.setText(readFile("To-Do-List/config/output.txt"));
+        textPane.setOpaque(true);
 
         JButton closeButton = new JButton("X");
+        closeButton.setFocusable(false);
+        closeButton.setOpaque(true);
+        closeButton.setPreferredSize(new Dimension(50, 25));
+        closeButton.setBackground(Color.BLACK);
+        closeButton.setForeground(Color.WHITE);
+
         closeButton.addActionListener(e -> {
-            saveWindowPosition(f1);
-            System.exit(0);
+            saveTextToFile(textPane.getText(), "To-Do-List/config/output.txt");
+            frame.dispose();
         });
-        closeButton.setFocusPainted(false);
-        closeButton.setForeground(Color.BLACK);
-        closeButton.setBackground(Color.LIGHT_GRAY);
-        closeButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        BPanel.add(closeButton);
 
-        JButton sB = new JButton("Save");
-        BPanel.add(sB);
+        JButton topButton = new JButton("not Top");
+        topButton.setFocusable(false);
+        topButton.setOpaque(true);
+        topButton.setPreferredSize(new Dimension(80, 25));
+        topButton.setBackground(Color.BLACK);
+        topButton.setForeground(Color.WHITE);
 
-        JButton AlwaysOnTop = new JButton("On Top");
-        BPanel.add(AlwaysOnTop);
+        topButton.addActionListener(e -> {
+            boolean state = frame.isAlwaysOnTop();
+            frame.setAlwaysOnTop(!state);
+            if (state) {
+                topButton.setText("not Top");
+            } else {
+                topButton.setText("Top");
+            }
+        });
 
-        JButton openButton = new JButton("Open");
-        BPanel.add(openButton);
+        MouseAdapter DragListener = new MouseAdapter() {
+            private Point initialPoint;
 
-        JTextPane tp = new JTextPane();
-        tp.setBackground(Color.BLACK);
-        tp.setForeground(Color.LIGHT_GRAY);
-        tp.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        tp.setEditable(true);
+            public void mousePressed(MouseEvent e) {
+                initialPoint = e.getPoint();
+            }
 
-        JScrollPane scrollPane = new JScrollPane(tp);
-        panel.add(scrollPane);
+            public void mouseDragged(MouseEvent e) {
+                Point point = e.getLocationOnScreen();
+                frame.setLocation(point.x - initialPoint.x, point.y - initialPoint.y);
+            }
+        };
 
+        Toolbar.add(topButton, BorderLayout.WEST);
+        Toolbar.addMouseListener(DragListener);
+        Toolbar.addMouseMotionListener(DragListener);
+        frame.add(textPane, BorderLayout.CENTER);
+        Toolbar.add(closeButton, BorderLayout.EAST);
+        frame.add(Toolbar, BorderLayout.NORTH);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveTextToFile(textPane.getText(), "To-Do-List/config/output.txt");
+            }
+        });
+        frame.setVisible(true);
+    }
+
+    public static Font getFont(String path, int size) {
         try {
-            File fontFile = new File("Fonts\\IkiMono-Regular.otf");
-            Font customFont = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(15f);
-            Font customFont2 = customFont.deriveFont(12f);
+            Font font = Font.createFont(Font.TRUETYPE_FONT, new File(path));
+            return font.deriveFont((float) size);
+        } catch (FontFormatException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            tp.setFont(customFont);
-            l1.setFont(customFont);
-            l1.setForeground(Color.LIGHT_GRAY);
-            sB.setFont(customFont2);
-            closeButton.setFont(customFont2);
-            AlwaysOnTop.setFont(customFont2);
-        } catch (IOException | FontFormatException e) {
+    public static String readFile(String filename) {
+        StringBuilder string = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                string.append(line).append("\n");
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
-
-        f1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        // استرجاع الموقع من الملف عند بدء التشغيل
-        Point lastLocation = loadWindowPosition();
-        if (lastLocation != null) {
-            f1.setLocation(lastLocation);
-        } else {
-            f1.setLocationRelativeTo(null);
-        }
-
-        AlwaysOnTop.addActionListener(new ActionListener() {
-            private boolean isAlwaysOnTop = false;
-
-            public void actionPerformed(ActionEvent e) {
-                isAlwaysOnTop = !isAlwaysOnTop;
-                f1.setAlwaysOnTop(isAlwaysOnTop);
-                AlwaysOnTop.setBackground(isAlwaysOnTop ? Color.DARK_GRAY : Color.LIGHT_GRAY);
-            }
-        });
-
-        // تحريك النافذة عند السحب
-        f1.addMouseListener(new MouseAdapter() {
-            int x, y;
-
-            public void mousePressed(MouseEvent e) {
-                x = e.getX();
-                y = e.getY();
-            }
-        });
-
-        f1.addMouseMotionListener(new MouseMotionAdapter() {
-            public void mouseDragged(MouseEvent e) {
-                f1.setLocation(f1.getX() + e.getX() - x, f1.getY() + e.getY() - y);
-            }
-        });
-
-        // تغيير حجم النافذة
-        f1.addMouseListener(new MouseAdapter() {
-            int mouseX, mouseY;
-            boolean resizing = false;
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                mouseX = e.getX();
-                mouseY = e.getY();
-                resizing = isInResizeArea(f1, mouseX, mouseY);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                resizing = false;
-            }
-        });
-
-        f1.addMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (!isInResizeArea(f1, mouseX, mouseY)) return;
-
-                int newWidth = f1.getWidth();
-                int newHeight = f1.getHeight();
-
-                if (mouseX >= f1.getWidth() - RESIZE_MARGIN) {
-                    newWidth = e.getX();
-                }
-                if (mouseY >= f1.getHeight() - RESIZE_MARGIN) {
-                    newHeight = e.getY();
-                }
-
-                f1.setSize(newWidth, newHeight);
-            }
-        });
-
-        sB.addActionListener(e -> SaveTextToFile(tp.getText()));
-        openButton.addActionListener(e -> openFile(tp));
-
-        loadTextFromFile(tp);
-        f1.setVisible(true);
+        return string.toString();
     }
 
-    private static boolean isInResizeArea(JFrame frame, int x, int y) {
-        return x >= frame.getWidth() - RESIZE_MARGIN || y >= frame.getHeight() - RESIZE_MARGIN;
-    }
-
-    private static void SaveTextToFile(String text) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("saved_text"))) {
+    private static void saveTextToFile(String text, String filename) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
             writer.write(text);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error saving file");
-        }
-    }
-
-    private static void loadTextFromFile(JTextPane textArea) {
-        File file = new File("saved_text");
-        if (file.exists()) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                textArea.read(reader, null);
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, "Error loading file");
-            }
-        }
-    }
-
-    private static Point loadWindowPosition() {
-        try (Scanner scanner = new Scanner(new File(LAST))) {
-            int x = scanner.nextInt();
-            int y = scanner.nextInt();
-            return new Point(x, y);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static void saveWindowPosition(Frame frame) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("last_location.txt"))) {
-            writer.write(frame.getX() + " " + frame.getY());
-        } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private static void openFile(JTextPane textPane) {
-        FileDialog fileDialog = new FileDialog((Frame) null, "Select a text file", FileDialog.LOAD);
-        fileDialog.setVisible(true);
-        String directory = fileDialog.getDirectory();
-        String filename = fileDialog.getFile();
-
-        if (directory != null && filename != null) {
-            File selectedFile = new File(directory, filename);
-            try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
-                textPane.read(reader, null);
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, "Error opening file");
-            }
         }
     }
 }
+
